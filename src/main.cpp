@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <fstream>
 #include <iostream>
+#include "CSVReader.h"
 
 using namespace std;
 using namespace sf;
@@ -28,6 +29,9 @@ void FormatButtonAndText(RectangleShape& button, Text& text, const int offsetFro
 }
 
 int main() {
+    vector<PlayerPerformance> players = readCSV("resources/games_details.csv");
+    cout << "Loaded " << players.size() << " NBA performances." << endl;
+
     unsigned int windowWidth = 800;
     unsigned int windowHeight = 600;
 

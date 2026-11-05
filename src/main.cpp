@@ -13,25 +13,29 @@ void SetTextPosition(Text& text, const float& x, const float& y){
     text.setPosition(Vector2f(x, y));
 }
 
-void FormatButtonAndText(RectangleShape& button, Text& text, const int offsetFromMiddle, const unsigned int& windowWidth, const unsigned int& windowHeight) {
-    int buttonWidth = 120;
-    int buttonHeight = 50;
+void FormatButtonAndText(RectangleShape& button, Text& text, const Vector2f& pos, const Vector2f& size) {
+    int buttonWidth = size.x;
+    int buttonHeight = size.y;
 
     button.setSize(Vector2f(buttonWidth, buttonHeight));
     button.setFillColor(Color::Black);
     button.setOutlineColor(Color::White);
     button.setOutlineThickness(2);
-    Vector2f buttonPosition = Vector2f(windowWidth/2 - buttonWidth/2 + offsetFromMiddle, windowHeight/2 - buttonHeight/2);
-    button.setPosition(buttonPosition);
+    button.setPosition(pos);
 
     text.setStyle(Text::Bold);
-    SetTextPosition(text, buttonPosition.x + button.getSize().x/2, buttonPosition.y + button.getSize().y/2);
+    // center text
+    SetTextPosition(text, pos.x + button.getSize().x/2, pos.y + button.getSize().y/2);
 }
 
 int main() {
-    vector<PlayerPerformance> players = readCSV("resources/games_details.csv");
+    vector<PlayerPerformance> players = readCSV("../resources/games_details.csv");
     cout << "Loaded " << players.size() << " NBA performances." << endl;
 
+    string rankSelected = "";
+    string sortSelected = "";
+
+    // Create window
     unsigned int windowWidth = 800;
     unsigned int windowHeight = 600;
 
@@ -39,28 +43,57 @@ int main() {
 
     Color backgroundColor(5, 50, 150);
     Font font;
-    if (!font.openFromFile("files/font.ttf")) return -1;
+    if (!font.openFromFile("../resources/font.ttf")) return -1;
 
     // Text display
     Text title(font, "NBA Performance Rankings", 24);
     title.setStyle(Text::Bold | Text::Underlined);
-    SetTextPosition(title, windowWidth/2, windowHeight/2 - 150);
+    SetTextPosition(title, windowWidth/2, 100);
 
-    Text prompt(font, "What would you like to rank by?", 20);
-    prompt.setStyle(Text::Bold);
-    SetTextPosition(prompt, windowWidth/2, windowHeight/2 - 75);
+    Text rankPrompt(font, "What would you like to rank by?", 20);
+    rankPrompt.setStyle(Text::Bold);
+    SetTextPosition(rankPrompt, windowWidth/2, 150);
+
+    Text sortPrompt(font, "What would you like to sort by?", 20);
+    sortPrompt.setStyle(Text::Bold);
+    SetTextPosition(sortPrompt, windowWidth/2, 300);
+
+    // Create buttons
+    Vector2f buttonSize = Vector2f(100, 50);
+    Vector2f centerPos = Vector2f(windowWidth/2 - buttonSize.x/2, windowHeight/2 - buttonSize.y/2);
+
+    // Map for changing color
+    unordered_map<string, RectangleShape*> buttons;
 
     RectangleShape pointsButton;
     Text pointsText(font, "Points", 20);
-    FormatButtonAndText(pointsButton, pointsText, -150, windowWidth, windowHeight);
+    FormatButtonAndText(pointsButton, pointsText, Vector2f(centerPos.x - 150, 200), buttonSize);
+    buttons["points"] = &pointsButton;
 
     RectangleShape reboundsButton;
     Text reboundsText(font, "Rebounds", 20);
-    FormatButtonAndText(reboundsButton, reboundsText, 0, windowWidth, windowHeight);
+    FormatButtonAndText(reboundsButton, reboundsText, Vector2f(centerPos.x, 200), buttonSize);
+    buttons["rebounds"] = &reboundsButton;
 
     RectangleShape assistsButton;
     Text assistsText(font, "Assists", 20);
-    FormatButtonAndText(assistsButton, assistsText, 150, windowWidth, windowHeight);
+    FormatButtonAndText(assistsButton, assistsText, Vector2f(centerPos.x + 150, 200), buttonSize);
+    buttons["assists"] = &assistsButton;
+
+    RectangleShape heapButton;
+    Text heapText(font, "Heap", 20);
+    FormatButtonAndText(heapButton, heapText, Vector2f(centerPos.x - 75, 350), buttonSize);
+    buttons["heap"] = &heapButton;
+
+    RectangleShape mergeButton;
+    Text mergeText(font, "Merge", 20);
+    FormatButtonAndText(mergeButton, mergeText, Vector2f(centerPos.x + 75, 350), buttonSize);
+    buttons["merge"] = &mergeButton;
+
+    RectangleShape sortButton;
+    Text sortText(font, "Sort", 20);
+    FormatButtonAndText(sortButton, sortText, Vector2f(centerPos.x, 450), buttonSize);
+    buttons["sort"] = &sortButton;
 
     while (render_window.isOpen()) {
         while (const optional event = render_window.pollEvent()) {
@@ -69,24 +102,83 @@ int main() {
             }
             if (const auto* mousePress = event->getIf<Event::MouseButtonPressed>()) {
                 if (mousePress->button == Mouse::Button::Left) {
+                    // press points button
                     if (pointsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        // TODO: points button logic here
                         cout << "points button pressed" << endl;
+
+                        // color previously selected button black
+                        if (!rankSelected.empty()) {
+                            buttons[rankSelected]->setFillColor(Color::Black);
+                        }
+                        rankSelected = "points";
+                        buttons[rankSelected]->setFillColor(Color(200, 120, 0));
                     }
+                    // press rebounds button
                     if (reboundsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        // TODO: rebounds button logic here
                         cout << "rebounds button pressed" << endl;
+
+                        if (!rankSelected.empty()) {
+                            buttons[rankSelected]->setFillColor(Color::Black);
+                        }
+                        rankSelected = "rebounds";
+                        buttons[rankSelected]->setFillColor(Color(200, 120, 0));
                     }
+                    // press assists button
                     if (assistsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        // TODO: assists button logic here
                         cout << "assists button pressed" << endl;
+
+                        if (!rankSelected.empty()) {
+                            buttons[rankSelected]->setFillColor(Color::Black);
+                        }
+                        rankSelected = "assists";
+                        buttons[rankSelected]->setFillColor(Color(200, 120, 0));
+                    }
+                    if (heapButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
+                        cout << "heap button pressed" << endl;
+
+                        if (!sortSelected.empty()) {
+                            buttons[sortSelected]->setFillColor(Color::Black);
+                        }
+                        sortSelected = "heap";
+                        buttons[sortSelected]->setFillColor(Color(200, 120, 0));
+                    }
+                    if (mergeButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
+                        cout << "merge button pressed" << endl;
+
+                        if (!sortSelected.empty()) {
+                            buttons[sortSelected]->setFillColor(Color::Black);
+                        }
+                        sortSelected = "merge";
+                        buttons[sortSelected]->setFillColor(Color(200, 120, 0));
+                    }
+                    if (sortButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
+                        cout << "sort button pressed" << endl;
+
+                        if (sortSelected == "heap") {
+                            // heap sort
+                            cout << "heap sort by " << rankSelected << endl;;
+                        }
+                        else if (sortSelected == "merge") {
+                            // merge sort
+                            cout << "merge sort by " << rankSelected << endl;
+                        }
+                        else {
+                            cout << "improper button selection" << endl;
+                        }
                     }
                 }
             }
         }
+        // Draw elements
         render_window.clear(backgroundColor);
         render_window.draw(title);
-        render_window.draw(prompt);
+        render_window.draw(rankPrompt);
+        render_window.draw(sortPrompt);
+
+
+        if (!sortSelected.empty()) {
+            buttons[sortSelected]->setFillColor(Color(200, 120, 0));
+        }
 
         render_window.draw(pointsButton);
         render_window.draw(pointsText);
@@ -94,6 +186,14 @@ int main() {
         render_window.draw(reboundsText);
         render_window.draw(assistsButton);
         render_window.draw(assistsText);
+
+        render_window.draw(heapButton);
+        render_window.draw(heapText);
+        render_window.draw(mergeButton);
+        render_window.draw(mergeText);
+
+        render_window.draw(sortButton);
+        render_window.draw(sortText);
 
         render_window.display();
     }

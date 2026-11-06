@@ -35,14 +35,13 @@ void FormatButtonAndText(RectangleShape& button, Text& text, const Vector2f& pos
 
 void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Text &text, const float& x, const float& y), vector<PlayerPerformance>& players) {
     int width = window.getSize().x;
-    int height = window.getSize().y;
 
     Text title(font, "Sorted Table", 20);
     title.setStyle(Text::Bold | Text::Underlined);
-    SetTextPosition(title, width/2, 100);
+    SetTextPosition(title, width/2, 50);
 
-    // vector of strings: [0] = number, [1] = name, [2] = points, [3] = rebounds, [4] = assists
-    vector<string> entries = {"\n\n", "Name\n\n", "Points\n\n", "Rebounds\n\n", "Assists\n\n"};
+    // vector of strings: [0] = number, [1] = name, [2] = points, [3] = rebounds, [4] = assists, [5] = playerID, [6] = gameID, [7] = team
+    vector<string> entries = {"\n\n", "Name\n\n", "Points\n\n", "Rebounds\n\n", "Assists\n\n", "Player ID\n\n", "Game ID\n\n", "Team\n\n"};
     for (int i = 0; i < 10; i++) {
         entries[0] += to_string(i+1) + "." + "\n\n";
         entries[1] += players[i].playerName + "\n\n";
@@ -58,14 +57,18 @@ void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Te
         string assistsStr = to_string(players[i].assists);
         assistsStr = assistsStr.substr(0, assistsStr.find('.') + 3);
         entries[4] += assistsStr + "\n\n";
+
+        entries[5] += to_string(players[i].playerId) + "\n\n";
+        entries[6] += to_string(players[i].gameId) + "\n\n";
+        entries[7] += players[i].team + "\n\n";
     }
 
-    vector<int> offsetsFromLeft = {0, 50, 300, 400, 500};
+    vector<int> offsetsFromLeft = {0, 50, 350, 450, 550, 650, 775, 900};
     window.draw(title);
     for (int i = 0; i < entries.size(); i++) {
         Text column(font, entries[i], 18);
         column.setStyle(Text::Bold);
-        column.setPosition(Vector2f(width/2 - 300 + offsetsFromLeft[i], 120));
+        column.setPosition(Vector2f(50 + offsetsFromLeft[i], 100));
         window.draw(column);
     }
 }
@@ -228,7 +231,7 @@ int main() {
                                 << " ms (" << rankedPlayers.size() << " records)";
                             message = output.str();
                             tablePlayers.swap(rankedPlayers);
-                            tableWindow.create(VideoMode({windowWidth, windowHeight}), "Table", Style::Titlebar | Style::Close);
+                            tableWindow.create(VideoMode({1050, windowHeight-100}), "Table", Style::Titlebar | Style::Close);
                             tableOpen = true;
                         }
 

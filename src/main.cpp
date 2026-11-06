@@ -28,6 +28,43 @@ void FormatButtonAndText(RectangleShape& button, Text& text, const Vector2f& pos
     SetTextPosition(text, pos.x + button.getSize().x/2, pos.y + button.getSize().y/2);
 }
 
+void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Text &text, const float& x, const float& y), vector<PlayerPerformance>& players) {
+    int width = window.getSize().x;
+    int height = window.getSize().y;
+
+    Text title(font, "Sorted Table", 20);
+    title.setStyle(Text::Bold | Text::Underlined);
+    SetTextPosition(title, width/2, 100);
+
+    // vector of strings: [0] = number, [1] = name, [2] = points, [3] = rebounds, [4] = assists
+    vector<string> entries = {"\n\n", "Name\n\n", "Points\n\n", "Rebounds\n\n", "Assists\n\n"};
+    for (int i = 0; i < 10; i++) {
+        entries[0] += to_string(i+1) + "." + "\n\n";
+        entries[1] += players[i].playerName + "\n\n";
+
+        string pointsStr = to_string(players[i].points);
+        pointsStr = pointsStr.substr(0, pointsStr.find('.') + 3);
+        entries[2] += pointsStr + "\n\n";
+
+        string reboundsStr = to_string(players[i].rebounds);
+        reboundsStr = reboundsStr.substr(0, reboundsStr.find('.') + 3);
+        entries[3] += reboundsStr + "\n\n";
+
+        string assistsStr = to_string(players[i].assists);
+        assistsStr = assistsStr.substr(0, assistsStr.find('.') + 3);
+        entries[4] += assistsStr + "\n\n";
+    }
+
+    vector<int> offsetsFromLeft = {0, 50, 300, 400, 500};
+    window.draw(title);
+    for (int i = 0; i < entries.size(); i++) {
+        Text column(font, entries[i], 18);
+        column.setStyle(Text::Bold);
+        column.setPosition(Vector2f(width/2 - 300 + offsetsFromLeft[i], 120));
+        window.draw(column);
+    }
+}
+
 int main() {
     vector<PlayerPerformance> players = readCSV("../resources/games_details.csv");
     cout << "Loaded " << players.size() << " NBA performances." << endl;
@@ -40,6 +77,8 @@ int main() {
     unsigned int windowHeight = 600;
 
     RenderWindow render_window(VideoMode({windowWidth, windowHeight}), "NBA Performance Rankings", Style::Titlebar | Style::Close);
+    RenderWindow tableWindow;
+    bool tableOpen = false;
 
     Color backgroundColor(5, 50, 150);
     Font font;
@@ -104,8 +143,6 @@ int main() {
                 if (mousePress->button == Mouse::Button::Left) {
                     // press points button
                     if (pointsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "points button pressed" << endl;
-
                         // color previously selected button black
                         if (!rankSelected.empty()) {
                             buttons[rankSelected]->setFillColor(Color::Black);
@@ -115,8 +152,6 @@ int main() {
                     }
                     // press rebounds button
                     if (reboundsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "rebounds button pressed" << endl;
-
                         if (!rankSelected.empty()) {
                             buttons[rankSelected]->setFillColor(Color::Black);
                         }
@@ -125,8 +160,6 @@ int main() {
                     }
                     // press assists button
                     if (assistsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "assists button pressed" << endl;
-
                         if (!rankSelected.empty()) {
                             buttons[rankSelected]->setFillColor(Color::Black);
                         }
@@ -134,8 +167,6 @@ int main() {
                         buttons[rankSelected]->setFillColor(Color(200, 120, 0));
                     }
                     if (heapButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "heap button pressed" << endl;
-
                         if (!sortSelected.empty()) {
                             buttons[sortSelected]->setFillColor(Color::Black);
                         }
@@ -143,8 +174,6 @@ int main() {
                         buttons[sortSelected]->setFillColor(Color(200, 120, 0));
                     }
                     if (mergeButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "merge button pressed" << endl;
-
                         if (!sortSelected.empty()) {
                             buttons[sortSelected]->setFillColor(Color::Black);
                         }
@@ -152,15 +181,17 @@ int main() {
                         buttons[sortSelected]->setFillColor(Color(200, 120, 0));
                     }
                     if (sortButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        cout << "sort button pressed" << endl;
-
-                        if (sortSelected == "heap") {
-                            // heap sort
-                            cout << "heap sort by " << rankSelected << endl;;
-                        }
-                        else if (sortSelected == "merge") {
-                            // merge sort
-                            cout << "merge sort by " << rankSelected << endl;
+                        if (!sortSelected.empty() && !rankSelected.empty()) {
+                            if (sortSelected == "heap") {
+                                // heap sort
+                                cout << "heap sort by " << rankSelected << endl;
+                            }
+                            else if (sortSelected == "merge") {
+                                // merge sort
+                                cout << "merge sort by " << rankSelected << endl;
+                            }
+                            tableWindow.create(VideoMode({windowWidth, windowHeight}), "Table", Style::Titlebar | Style::Close);
+                            tableOpen = true;
                         }
                         else {
                             cout << "improper button selection" << endl;
@@ -169,16 +200,20 @@ int main() {
                 }
             }
         }
+        if (tableOpen && tableWindow.isOpen()) {
+            while (const optional lbEvent = tableWindow.pollEvent()) {
+                if (lbEvent->is<Event::Closed>()) {
+                    tableWindow.close();
+                    tableOpen = false;
+                }
+            }
+        }
+
         // Draw elements
         render_window.clear(backgroundColor);
         render_window.draw(title);
         render_window.draw(rankPrompt);
         render_window.draw(sortPrompt);
-
-
-        if (!sortSelected.empty()) {
-            buttons[sortSelected]->setFillColor(Color(200, 120, 0));
-        }
 
         render_window.draw(pointsButton);
         render_window.draw(pointsText);
@@ -196,6 +231,12 @@ int main() {
         render_window.draw(sortText);
 
         render_window.display();
+
+        if (tableOpen && tableWindow.isOpen()) {
+            tableWindow.clear(backgroundColor);
+            DrawTable(tableWindow, font, SetTextPosition, players);
+            tableWindow.display();
+        }
     }
 
     return 0;

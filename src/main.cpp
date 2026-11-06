@@ -72,6 +72,7 @@ void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Te
 
 int main() {
     vector<PlayerPerformance> players = readCSV("../resources/games_details.csv");
+    vector<PlayerPerformance> tablePlayers;
     cout << "Loaded " << players.size() << " NBA performances." << endl;
 
     string rankSelected = "";
@@ -203,8 +204,6 @@ int main() {
                             } else if (rankSelected == "assists") {
                                 stat = "AST";
                             }
-                
-
                             // Each run starts with the same original records.
                             auto rankedPlayers = players;
                             const bool useMergeSort = sortSelected == "merge";
@@ -228,21 +227,9 @@ int main() {
                                 << std::fixed << std::setprecision(2) << elapsedMs
                                 << " ms (" << rankedPlayers.size() << " records)";
                             message = output.str();
-                    if (sortButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
-                        if (!sortSelected.empty() && !rankSelected.empty()) {
-                            if (sortSelected == "heap") {
-                                // heap sort
-                                cout << "heap sort by " << rankSelected << endl;
-                            }
-                            else if (sortSelected == "merge") {
-                                // merge sort
-                                cout << "merge sort by " << rankSelected << endl;
-                            }
+                            tablePlayers.swap(rankedPlayers);
                             tableWindow.create(VideoMode({windowWidth, windowHeight}), "Table", Style::Titlebar | Style::Close);
                             tableOpen = true;
-                        }
-                        else {
-                            cout << "improper button selection" << endl;
                         }
 
                         timingText.setString(message);
@@ -287,7 +274,7 @@ int main() {
 
         if (tableOpen && tableWindow.isOpen()) {
             tableWindow.clear(backgroundColor);
-            DrawTable(tableWindow, font, SetTextPosition, players);
+            DrawTable(tableWindow, font, SetTextPosition, tablePlayers);
             tableWindow.display();
         }
     }

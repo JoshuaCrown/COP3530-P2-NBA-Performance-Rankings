@@ -14,6 +14,8 @@ FetchContent_MakeAvailable(SFML)
 
 add_executable(COP3530-P2-NBA-Performance-Rankings src/main.cpp
         src/CSVReader.cpp
+        src/MergeSort.cpp
+        src/HeapSort.cpp
 )
 target_compile_features(COP3530-P2-NBA-Performance-Rankings PRIVATE cxx_std_17)
 target_link_libraries(COP3530-P2-NBA-Performance-Rankings PRIVATE SFML::Graphics)

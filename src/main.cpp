@@ -2,6 +2,11 @@
 #include <fstream>
 #include <iostream>
 #include "CSVReader.h"
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include "HeapSort.h"
+#include "MergeSort.h"
 
 using namespace std;
 using namespace sf;
@@ -134,6 +139,9 @@ int main() {
     FormatButtonAndText(sortButton, sortText, Vector2f(centerPos.x, 450), buttonSize);
     buttons["sort"] = &sortButton;
 
+    Text timingText(font, "Choose a statistic and an algorithm, then click Sort.", 18);
+    SetTextPosition(timingText, windowWidth / 2.0f, 545.0f);
+
     while (render_window.isOpen()) {
         while (const optional event = render_window.pollEvent()) {
             if (event->is<Event::Closed>()) {
@@ -180,6 +188,46 @@ int main() {
                         sortSelected = "merge";
                         buttons[sortSelected]->setFillColor(Color(200, 120, 0));
                     }
+                    if (sortButton.getGlobalBounds().contains(
+                            static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
+                        std::string message;
+
+                        if (rankSelected.empty() || sortSelected.empty()) {
+                            message = "Choose a statistic and an algorithm first.";
+                        } else if (players.empty()) {
+                            message = "No player records were loaded. Check the CSV path.";
+                        } else {
+                            std::string stat = "PTS";
+                            if (rankSelected == "rebounds") {
+                                stat = "REB";
+                            } else if (rankSelected == "assists") {
+                                stat = "AST";
+                            }
+                
+
+                            // Each run starts with the same original records.
+                            auto rankedPlayers = players;
+                            const bool useMergeSort = sortSelected == "merge";
+
+                            using Clock = std::chrono::steady_clock;
+                            const auto start = Clock::now();
+
+                            if (useMergeSort) {
+                                MergeSort::mergeSort(rankedPlayers, stat);
+                            } else {
+                                HeapSort::heapSort(rankedPlayers, stat);
+                            }
+
+                            const auto end = Clock::now();
+                            const double elapsedMs =
+                                std::chrono::duration<double, std::milli>(end - start).count();
+
+                            std::ostringstream output;
+                            output << (useMergeSort ? "Merge Sort" : "Heap Sort")
+                                << " by " << rankSelected << ": "
+                                << std::fixed << std::setprecision(2) << elapsedMs
+                                << " ms (" << rankedPlayers.size() << " records)";
+                            message = output.str();
                     if (sortButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
                         if (!sortSelected.empty() && !rankSelected.empty()) {
                             if (sortSelected == "heap") {
@@ -196,6 +244,10 @@ int main() {
                         else {
                             cout << "improper button selection" << endl;
                         }
+
+                        timingText.setString(message);
+                        SetTextPosition(timingText, windowWidth / 2.0f, 545.0f);
+                        std::cout << message << '\n';
                     }
                 }
             }
@@ -230,6 +282,7 @@ int main() {
         render_window.draw(sortButton);
         render_window.draw(sortText);
 
+        render_window.draw(timingText);
         render_window.display();
 
         if (tableOpen && tableWindow.isOpen()) {

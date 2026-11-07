@@ -74,8 +74,15 @@ void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Te
     }
 }
 
-int main() {
-    vector<PlayerPerformance> players = readCSV("../resources/games_details.csv");
+int main(int argc, char* argv[]) {
+    const auto exeDir = std::filesystem::absolute(argv[0]).parent_path();
+    const auto fontPath = exeDir / "resources" / "font.ttf";
+    const auto csvPath = exeDir / "resources" / "games_details.csv";
+
+    Font font;
+    if (!font.openFromFile(fontPath)) return -1;
+
+    vector<PlayerPerformance> players = readCSV(csvPath);
     vector<PlayerPerformance> tablePlayers;
     cout << "Loaded " << players.size() << " NBA performances." << endl;
 
@@ -91,8 +98,6 @@ int main() {
     bool tableOpen = false;
 
     Color backgroundColor(5, 50, 150);
-    Font font;
-    if (!font.openFromFile("../resources/font.ttf")) return -1;
 
     // Text display
     Text title(font, "NBA Performance Rankings", 24);

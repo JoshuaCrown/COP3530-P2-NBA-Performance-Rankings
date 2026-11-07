@@ -66,7 +66,8 @@ void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Te
     vector<int> offsetsFromLeft = {0, 50, 350, 450, 550, 650, 775, 900};
     window.draw(title);
     for (int i = 0; i < entries.size(); i++) {
-        Text column(font, entries[i], 18);
+        sf::String unicodeText = sf::String::fromUtf8(entries[i].begin(), entries[i].end());
+        Text column(font, unicodeText, 20);
         column.setStyle(Text::Bold);
         column.setPosition(Vector2f(50 + offsetsFromLeft[i], 100));
         window.draw(column);

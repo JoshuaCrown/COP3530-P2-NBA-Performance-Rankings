@@ -42,6 +42,13 @@ void DrawTable(RenderWindow& window, const Font& font, void(*SetTextPosition)(Te
 
     // vector of strings: [0] = number, [1] = name, [2] = points, [3] = rebounds, [4] = assists, [5] = playerID, [6] = gameID, [7] = team
     vector<string> entries = {"\n\n", "Name\n\n", "Points\n\n", "Rebounds\n\n", "Assists\n\n", "Player ID\n\n", "Game ID\n\n", "Team\n\n"};
+    
+    // must handle players with fewer than 10 matches
+    int rows = static_cast<int>(players.size());
+    if (rows > 10){
+        rows = 10;
+    }
+
     for (int i = 0; i < 10; i++) {
         entries[0] += to_string(i+1) + "." + "\n\n";
         entries[1] += players[i].playerName + "\n\n";
@@ -88,6 +95,7 @@ int main(int argc, char* argv[]) {
 
     string rankSelected = "";
     string sortSelected = "";
+    bool pointsFilterEnabled = false;
 
     // Create window
     unsigned int windowWidth = 800;
@@ -152,6 +160,16 @@ int main(int argc, char* argv[]) {
     Text timingText(font, "Choose a statistic and an algorithm, then click Sort.", 18);
     SetTextPosition(timingText, windowWidth / 2.0f, 545.0f);
 
+    RectangleShape filterButton;
+    Text filterText(font, "Filter: All games", 18);
+
+    FormatButtonAndText(
+        filterButton,
+        filterText,
+        Vector2f(225, 15),
+        Vector2f(350, 45)
+    );
+
     while (render_window.isOpen()) {
         while (const optional event = render_window.pollEvent()) {
             if (event->is<Event::Closed>()) {
@@ -159,6 +177,24 @@ int main(int argc, char* argv[]) {
             }
             if (const auto* mousePress = event->getIf<Event::MouseButtonPressed>()) {
                 if (mousePress->button == Mouse::Button::Left) {
+
+                    if (filterButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
+
+                        pointsFilterEnabled = !pointsFilterEnabled;
+
+                        if (pointsFilterEnabled) {
+                            filterText.setString("Filter: 30+ points");
+                            filterButton.setFillColor(Color(200, 120, 0));
+                        } else {
+                            filterText.setString("Filter: All games");
+                            filterButton.setFillColor(Color::Black);
+                        }
+
+                        SetTextPosition(filterText, 400.0f, 37.5f);
+
+                        timingText.setString("Click Sort to apply the selected filter.");
+                        SetTextPosition(timingText, windowWidth / 2.0f, 545.0f);
+                    }
                     // press points button
                     if (pointsButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(Mouse::getPosition(render_window)))) {
                         // color previously selected button black
@@ -214,7 +250,17 @@ int main(int argc, char* argv[]) {
                                 stat = "AST";
                             }
                             // Each run starts with the same original records.
-                            auto rankedPlayers = players;
+                            vector<PlayerPerformance> rankedPlayers;
+
+                            if (pointsFilterEnabled) {
+                                for (const auto& player : players) {
+                                    if (player.points >= 30.0f) {
+                                        rankedPlayers.push_back(player);
+                                    }
+                                }
+                            } else {
+                                rankedPlayers = players;
+                            }
                             const bool useMergeSort = sortSelected == "merge";
 
                             using Clock = std::chrono::steady_clock;
@@ -259,6 +305,9 @@ int main(int argc, char* argv[]) {
 
         // Draw elements
         render_window.clear(backgroundColor);
+        // Display 30+ points filter button
+        render_window.draw(filterButton);
+        render_window.draw(filterText);
         render_window.draw(title);
         render_window.draw(rankPrompt);
         render_window.draw(sortPrompt);

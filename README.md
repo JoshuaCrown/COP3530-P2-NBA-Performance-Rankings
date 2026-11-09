@@ -54,6 +54,15 @@ cmake -E copy_directory resources build/resources
 ```
 
 The initial build may take longer because CMake downloads and compiles SFML.
+
+<h2> SFML Setup </h2>
+
+We used SFML 3.0.2. I assume it would work with other 3.0 versions and later but we have not tested that.
+
+[SFML with the CMake Project Template](https://www.sfml-dev.org/tutorials/3.0/getting-started/cmake/)
+
+[SFML and Visual Studio](https://www.sfml-dev.org/tutorials/3.0/getting-started/visual-studio/)
+
 <h2> Instructions </h2>
 
 1. Select one metric to sort by, descendingly.
